@@ -10,10 +10,15 @@ import pandas as pd
 import codecs
 import csv
 import numpy as np
+import matplotlib.pyplot as plt
+
+
+#os.add_dll_directory("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin")
+                     
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow import keras
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler 
 
 from sklearn.model_selection import train_test_split
 from sklearn import datasets
@@ -23,6 +28,10 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import regularizers
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+
+from sklearn.linear_model import LinearRegression
 
 
 # Convert a Pandas dataframe to the X,y inputs that Keras needs
@@ -46,48 +55,74 @@ def to_xy(df, target):
 
 path = "."
 filename_read = os.path.join(path, "GOOG.csv")
-df = pd.read_csv(filename_read, na_values=['NA', '?'])  # reads NA values as ?
-df = df.select_dtypes(include=['int', 'float'])  # selects only numerical coloumns drops symbol column
+df = pd.read_csv(filename_read, na_values=['NA', '?']) # reads NA values as ?
+df = df.select_dtypes(include=['int', 'float']) #selects only numerical coloumns drops symbol column drops date and symbol
 
-# np.random.seed(42) # Uncomment this line to get the same shuffle each time
-# shuffling has not effect on the data
-df = df.reindex(np.random.permutation(df.index))
-df.reset_index(inplace=True, drop=True)
+#np.random.seed(42) # Uncomment this line to get the same shuffle each time 
+#shuffling has not effect on the data
+# df = df.reindex(np.random.permutation(df.index))
+# df.reset_index(inplace=True, drop=True)
 
-# null_columns=df.columns[df.isnull().any()] #Contains 0 null columns
+#null_columns=df.columns[df.isnull().any()] #Contains 0 null columns
 
-X, y = to_xy(df, "close")  # Predicting the close value
-y = tf.keras.utils.to_categorical(y)
+X,y = to_xy(df, "close") #Predicting the close value
+#y = tf.keras.utils.to_categorical(y1) 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+google_stock_data = df[['open','close','high','close']]
 
-# standardises the data - improves like crazy
+# X = df[['open','close','high','close']]
+# print (google_stock_data)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+
+#standardises the data - improves like crazy
 sc = StandardScaler()
-sc.fit(X_train)
-X_train = sc.transform(X_train)
-X_test = sc.transform(X_test)
+# sc.fit(X_train)
+# X_train = sc.transform(X_train)
+# X_test = sc.transform(X_test)
 
-# building the model with 1 hidden node -> 1 sigmoid
-model = Sequential()
-model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid'))  # Hidden 1 using sigmoid
-# model.add(Dropout(0.1)) #makes the graph look all weird
-model.add(Dense(y.shape[1]))  # Output
-model.compile(loss='mean_squared_error', optimizer='adam')
-monitor = EarlyStopping(monitor='loss', min_delta=0.1, patience=5)  # Does not have an effect
-model.summary()
-model.fit(X, y, verbose=2, epochs=50)  # trains the just as well on a low number of epochs 5 is the same as 50
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-# plot the loss on the training data, and also the validation data
-plt.figure(figsize=(10, 10))  # both loss and val_loss follow the same pattern
-training_trace = model.fit(X_train, y_train, callbacks=monitor, validation_split=0.2, verbose=2, epochs=50)
-plt.plot(training_trace.history['loss'])
-plt.plot(training_trace.history['val_loss'])
-plt.xlabel("epochs")
-plt.ylabel("loss")
-plt.show()
+#building the model with 1 hidden node -> 1 sigmoid
+# model = Sequential()
+# model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid')) # Hidden 1 using sigmoid
+# #model.add(Dropout(0.1)) #makes the graph look all weird
+# model.add(Dense(y.shape[1])) # Output
+# model.compile(loss='mean_squared_error', optimizer='adam')
 
-# fitting and testing the model
+# monitor = EarlyStopping(monitor='loss', min_delta = 0.1, patience = 5) #Does not have an effect
+# model.summary()
+# model.fit(X,y,verbose=2,epochs=5) #trains the just as well on a low number of epochs 5 is the same as 50
+
+# ## plot the loss on the training data, and also the validation data
+# plt.figure(figsize=(10,10)) #both loss and val_loss follow the same pattern
+# training_trace = model.fit(X_train,y_train,callbacks = monitor,validation_split=0.2 ,verbose=2,epochs=50)
+# plt.plot(training_trace.history['loss'])
+# plt.plot(training_trace.history['val_loss'])
+# plt.xlabel("epochs")
+# plt.ylabel("loss")
+# plt.show()
+
+#fitting and testing the model
 pred = model.predict(X_test)
-score = np.sqrt(metrics.mean_squared_error(pred, y_test))
+score = np.sqrt(metrics.mean_squared_error(pred,y_test))
 
-print("Mean Squared error: {}".format(score))  # 0.0199 aka really good
+plt.figure(figsize=(15, 5))
+
+plt.plot(1,2,1)
+#plt.plot(np.array(y1[0:100]))
+#plt.plot(X_test)
+
+c = tf.keras.utils.to_categorical(df['close'])
+inverted = np.argmax(c)
+
+plt.plot(y_test)
+plt.plot(pred)
+
+plt.title('close values')
+plt.xlabel('close')
+
+print("Mean Squared error: {}".format(score)) #0.0199 aka really good
+
+    
