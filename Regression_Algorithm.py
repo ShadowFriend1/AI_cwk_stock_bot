@@ -7,22 +7,15 @@ Created on Sun Nov 21 17:19:26 2021
 
 import os
 import pandas as pd
-import codecs
-import csv
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from tensorflow import keras
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.model_selection import train_test_split
-from sklearn import datasets
 from sklearn import metrics
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras import regularizers
 
 
 # Convert a Pandas dataframe to the X,y inputs that Keras needs
