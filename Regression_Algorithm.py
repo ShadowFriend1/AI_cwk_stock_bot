@@ -34,95 +34,60 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import LinearRegression
 
 
-# Convert a Pandas dataframe to the X,y inputs that Keras needs
-def to_xy(df, target):
-    result = []
-    for x in df.columns:
-        if x != target:
-            result.append(x)
-    # find out the type of the target column.  Is it really this hard? :(
-    target_type = df[target].dtypes
-    target_type = target_type[0] if hasattr(
-        target_type, '__iter__') else target_type
-    # Encode to int for classification, float otherwise. TensorFlow likes 32 bits.
-    if target_type in (np.int64, np.int32):
-        # Classification
-        dummies = pd.get_dummies(df[target])
-        return df[result].values.astype(np.float32), dummies.values.astype(np.float32)
-    # Regression
-    return df[result].values.astype(np.float32), df[[target]].values.astype(np.float32)
+def read(filename):
+    path = "."
+    filename_read = os.path.join(path, filename)
+    df = pd.read_csv(filename_read, na_values=['NA', '?']) # reads NA values as ?
+    df = df.select_dtypes(include=['int', 'float']) #selects only numerical coloumns drops symbol column drops date and symbol
+    return df
 
 
-path = "."
-filename_read = os.path.join(path, "GOOG.csv")
-df = pd.read_csv(filename_read, na_values=['NA', '?']) # reads NA values as ?
-df = df.select_dtypes(include=['int', 'float']) #selects only numerical coloumns drops symbol column drops date and symbol
-
-#np.random.seed(42) # Uncomment this line to get the same shuffle each time 
-#shuffling has not effect on the data
-# df = df.reindex(np.random.permutation(df.index))
-# df.reset_index(inplace=True, drop=True)
+def shuffling(df):
+    #np.random.seed(42) # Uncomment this line to get the same shuffle each time 
+    #shuffling has not effect on the data
+    df = df.reindex(np.random.permutation(df.index))
+    df.reset_index(inplace=True, drop=True)
+    return df
 
 #null_columns=df.columns[df.isnull().any()] #Contains 0 null columns
 
-X,y = to_xy(df, "close") #Predicting the close value
-#y = tf.keras.utils.to_categorical(y1) 
-
-google_stock_data = df[['open','close','high','close']]
-
-# X = df[['open','close','high','close']]
-# print (google_stock_data)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
-
-#standardises the data - improves like crazy
-sc = StandardScaler()
-# sc.fit(X_train)
-# X_train = sc.transform(X_train)
-# X_test = sc.transform(X_test)
-
-model = LinearRegression()
-model.fit(X_train, y_train)
-
-#building the model with 1 hidden node -> 1 sigmoid
-# model = Sequential()
-# model.add(Dense(1, input_dim=X.shape[1], activation='sigmoid')) # Hidden 1 using sigmoid
-# #model.add(Dropout(0.1)) #makes the graph look all weird
-# model.add(Dense(y.shape[1])) # Output
-# model.compile(loss='mean_squared_error', optimizer='adam')
-
-# monitor = EarlyStopping(monitor='loss', min_delta = 0.1, patience = 5) #Does not have an effect
-# model.summary()
-# model.fit(X,y,verbose=2,epochs=5) #trains the just as well on a low number of epochs 5 is the same as 50
-
-# ## plot the loss on the training data, and also the validation data
-# plt.figure(figsize=(10,10)) #both loss and val_loss follow the same pattern
-# training_trace = model.fit(X_train,y_train,callbacks = monitor,validation_split=0.2 ,verbose=2,epochs=50)
-# plt.plot(training_trace.history['loss'])
-# plt.plot(training_trace.history['val_loss'])
-# plt.xlabel("epochs")
-# plt.ylabel("loss")
-# plt.show()
-
-#fitting and testing the model
-pred = model.predict(X_test)
-score = np.sqrt(metrics.mean_squared_error(pred,y_test))
-
-plt.figure(figsize=(15, 5))
-
-plt.plot(1,2,1)
-#plt.plot(np.array(y1[0:100]))
-#plt.plot(X_test)
-
-c = tf.keras.utils.to_categorical(df['close'])
-inverted = np.argmax(c)
-
-plt.plot(y_test)
-plt.plot(pred)
-
-plt.title('close values')
-plt.xlabel('close')
-
-print("Mean Squared error: {}".format(score)) #0.0199 aka really good
-
+def train(df):
     
+    X = df[['open','high','low','close']].values.astype(np.float32)
+    y = df[['close']].values.astype(np.float32)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    #standardises the data - will not do much as data is already similar in size
+    sc = StandardScaler()
+    sc.fit(X_train)
+    X_train = sc.transform(X_train)
+    X_test = sc.transform(X_test)
+    
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    
+    #fitting and testing the model
+    pred = model.predict(X_test) #usually only out by 0.0005
+    
+    return model, X_train, X_test, y_test, pred
+
+def output(y_test,pred):
+    
+    score = np.sqrt(metrics.mean_squared_error(pred,y_test))
+
+    plt.figure(figsize=(15, 5))
+    
+    plt.plot(1,2,1)
+    plt.plot(np.array(y_test[0:20]))
+    plt.plot(pred[0:20])
+    
+    plt.title('close values')
+    plt.xlabel('close')
+    
+    print("Mean Squared error: {}".format(score)) #0.0199 aka really good
+
+dataframe = read('GOOG.csv') #returns dataframe 
+dataframe = shuffling(dataframe) #returns dataframe
+trained_model = train(dataframe) #return model, X_train, X_test, y_test, pred
+output(trained_model[3],trained_model[4])
