@@ -128,6 +128,7 @@ def output(y_test,pred):
     plt.xlabel('close')
     
     print("Mean Squared error: {}".format(score)) 
+    return score
 
 def correlationtest():
     dataframe = read('GOOG.csv') #returns dataframe 
@@ -138,14 +139,15 @@ def runModel():
     dataframe = read('GOOG.csv') #returns dataframe 
     dataframe = shuffling(dataframe) #returns dataframe
     trained_model = train(dataframe) #return model, X_train, X_test, y_test, pred
-    output(trained_model[3],trained_model[4])
+    return output(trained_model[3],trained_model[4])
 
 def run_PCA_Model():
     dataframe = read('GOOG.csv') #returns dataframe 
     dataframe = shuffling(dataframe) #returns dataframe
     trained_model = trained_pca(dataframe) #return model, X_train, X_test, y_test, pred
-    output(trained_model[3],trained_model[4])
+    return output(trained_model[3],trained_model[4])
 
-#correlationtest()
-runModel()
-run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
+if __name__=="__main__":
+    #correlationtest()
+    runModel()
+    run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
