@@ -17,6 +17,7 @@ from sklearn.decomposition import PCA
 def read(filename):
     path = "."
     filename_read = os.path.join(path, filename)
+    print(filename_read)
     # reads NA values as ?
     df = pd.read_csv(filename_read, na_values=['NA', '?']) 
     #selects only numerical coloumns drops symbol column drops date and symbol
@@ -121,8 +122,8 @@ def output(y_test,pred):
     plt.figure(figsize=(15, 5))
     
     plt.plot(1,2,1)
-    plt.plot(np.array(y_test[0:20]))
-    plt.plot(pred[0:20])
+    plt.plot(np.array(y_test[0:5]))
+    plt.plot(pred[0:5])
     
     plt.title('close values')
     plt.xlabel('close')
@@ -148,4 +149,4 @@ def run_PCA_Model():
 
 #correlationtest()
 runModel()
-run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
+#run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
