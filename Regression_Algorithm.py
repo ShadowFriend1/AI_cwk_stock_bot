@@ -47,7 +47,7 @@ def pca(df):
     X_scaled = sc.fit_transform(X)
         
     #pca = PCA(n_components=None) #shows that only need 1 component to capture 100% of the data
-    pca = PCA(n_components=None)
+    pca = PCA(n_components=2)
     pca.fit(X_scaled)
     
     # Get the eigenvalues
@@ -121,8 +121,8 @@ def output(y_test,pred):
     plt.figure(figsize=(15, 5))
     
     plt.plot(1,2,1)
-    plt.plot(np.array(y_test[0:20]))
-    plt.plot(pred[0:20])
+    plt.plot(np.array(y_test[0:5]))
+    plt.plot(pred[0:5])
     
     plt.title('close values')
     plt.xlabel('close')
@@ -146,6 +146,6 @@ def run_PCA_Model():
     trained_model = trained_pca(dataframe) #return model, X_train, X_test, y_test, pred
     output(trained_model[3],trained_model[4])
 
-#correlationtest()
-runModel()
-run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
+correlationtest()
+#runModel()
+#run_PCA_Model() #has a higher R squared value but no corrleation, suggesting hidden variables???
