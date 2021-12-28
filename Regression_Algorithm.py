@@ -106,7 +106,7 @@ def train_k_fold(df, k):
     kf = KFold(k)
 
     fold = 1
-    best_score = 1
+    best_score = 0
     worst_score = 0
     average_score = 0
     scores = []
@@ -117,12 +117,15 @@ def train_k_fold(df, k):
         score = np.sqrt(metrics.mean_squared_error(pred, y_test))
         print(f"Fold:  #{fold}, Training Size: {len(x[train_index])}, Validation Size: {len(y[validate_index])}")
         print("Mean Squared error: {}".format(score))
-        if score < best_score:
+        if (score < best_score) or (best_score == 0):
             best_score = score
         fold += 1
         if score > worst_score:
             worst_score = score
-        average_score = (average_score + score) / 2
+        if average_score == 0:
+            average_score = score
+        else:
+            average_score = (average_score + score) / 2
 
         scores.append(score)
 
@@ -136,7 +139,7 @@ def train_k_fold(df, k):
         plt.xlabel('close')
 
     plt.figure(figsize=(15, 5))
-    plt.plot(np.array(scores))
+    plt.bar([n for n in range(k)], scores)
     plt.title('Mean Squared Averages Per Fold')
     plt.xlabel('Fold')
     plt.ylabel('Score')
