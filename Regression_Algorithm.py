@@ -154,6 +154,69 @@ def train_k_fold(df, k):
     print(f"Average Score: {average_score}")
 
 
+def train_k_fold_pca(df, k):
+
+    df_s = shuffling(df)
+
+    x = df_s[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = df_s[['close']].values.astype(np.float32)
+
+    sc = StandardScaler()
+    pca_bot = PCA(n_components=2)
+    x_scaled = sc.fit_transform(x)
+    x_pca = pca_bot.fit_transform(x_scaled)
+
+    model = LinearRegression()
+
+    # trains with k fold where k is determined by the parameter k, outputs prediction graphs for each fold and error
+    # then produces a graph of error per fold as well as a best,worst and average error
+
+    kf = KFold(k)
+
+    fold = 1
+    best_score = 0
+    worst_score = 0
+    average_score = 0
+    scores = []
+    for train_index, validate_index in kf.split(x_pca, y):
+        model.fit(x_pca[train_index], y[train_index])
+        y_test = y[validate_index]
+        pred = model.predict(x_pca[validate_index])
+        score = np.sqrt(metrics.mean_squared_error(pred, y_test))
+        print(f"Fold:  #{fold}, Training Size: {len(x_pca[train_index])}, Validation Size: {len(y[validate_index])}")
+        print("Mean Squared error: {}".format(score))
+        if (score < best_score) or (best_score == 0):
+            best_score = score
+        fold += 1
+        if score > worst_score:
+            worst_score = score
+        if average_score == 0:
+            average_score = score
+        else:
+            average_score = (average_score + score) / 2
+
+        scores.append(score)
+
+        plt.figure(figsize=(15, 5))
+
+        plt.plot(1, 2, 1)
+        plt.plot(np.array(y_test[0:20]))
+        plt.plot(pred[0:20])
+
+        plt.title('close values')
+        plt.xlabel('close')
+
+    plt.figure(figsize=(15, 5))
+    plt.bar([n for n in range(k)], scores)
+    plt.title('Mean Squared Averages Per Fold')
+    plt.xlabel('Fold')
+    plt.ylabel('Score')
+
+    print(f"Best Score: {best_score}")
+    print(f"Worst Score: {worst_score}")
+    print(f"Average Score: {average_score}")
+
+
 def train(df):
     x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df[['close']].values.astype(np.float32)
@@ -215,12 +278,18 @@ def run_pca_model():
 def run_k_fold_model():
     dataframe = read('GOOG.csv')  # returns dataframe
     dataframe = shuffling(dataframe)  # returns dataframe
-    train_k_fold(dataframe, 10)  # return model, x_train, x_test, y_test, pred
+    train_k_fold(dataframe, 10)  # output graph of errors for k fold analysis k=10
+
+
+def run_k_fold_model_pca():
+    dataframe = read('GOOG.csv')  # returns dataframe
+    dataframe = shuffling(dataframe)  # returns dataframe
+    train_k_fold_pca(dataframe, 10)  # output graph of errors for k fold analysis k=10 using pca
 
 
 if __name__ == "__main__":
     # correlation_test()
     # run_model()
     # run_pca_model()  # has a higher R squared value but no correlation, suggesting hidden variables???
-    run_k_fold_model()
+    run_k_fold_model_pca()
     plt.show()
