@@ -46,6 +46,7 @@ def pca(df):
     x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
 
     sc = StandardScaler()
+    
     x_scaled = sc.fit_transform(x)
 
     # pca = PCA(n_components=None) #shows that only need 1 component to capture 100% of the data
