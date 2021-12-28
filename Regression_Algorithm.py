@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.preprocessing import StandardScaler
+from joblib import dump, load
 
 
 def read(filename):
@@ -43,7 +44,7 @@ def shuffling(df):
 
 def pca(df):
     # if possible to auto generate x,y with all features instead of manually picking features for x
-    x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
 
     sc = StandardScaler()
     
@@ -70,7 +71,7 @@ def pca(df):
 
 
 def trained_pca(df):
-    x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df[['close']].values.astype(np.float32)
 
     sc = StandardScaler()
@@ -88,6 +89,8 @@ def trained_pca(df):
     # fitting and testing the model
     pred = model.predict(x_test)  # usually only out by 0.0005
 
+    dump(model, "pca_train.joblib")
+
     # shows no correlation between components
     # x_pca = pd.DataFrame(x_pca)
     # fig = plt.figure(figsize=(10, 8))
@@ -98,10 +101,8 @@ def trained_pca(df):
 
 def train_k_fold(df, k):
 
-    df_s = shuffling(df)
-
-    x = df_s[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
-    y = df_s[['close']].values.astype(np.float32)
+    x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = df[['close']].values.astype(np.float32)
 
     model = LinearRegression()
 
@@ -124,6 +125,7 @@ def train_k_fold(df, k):
         print("Mean Squared error: {}".format(score))
         if (score < best_score) or (best_score == 0):
             best_score = score
+            dump(model, "k_fold_best.joblib")
         fold += 1
         if score > worst_score:
             worst_score = score
@@ -158,7 +160,7 @@ def train_k_fold_pca(df, k):
 
     df_s = shuffling(df)
 
-    x = df_s[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    x = df_s[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df_s[['close']].values.astype(np.float32)
 
     sc = StandardScaler()
@@ -187,6 +189,7 @@ def train_k_fold_pca(df, k):
         print("Mean Squared error: {}".format(score))
         if (score < best_score) or (best_score == 0):
             best_score = score
+            dump(model, "k_fold_pca_best.joblib")
         fold += 1
         if score > worst_score:
             worst_score = score
@@ -218,7 +221,7 @@ def train_k_fold_pca(df, k):
 
 
 def train(df):
-    x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df[['close']].values.astype(np.float32)
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -230,6 +233,8 @@ def train(df):
 
     # fitting and testing the model
     pred = model.predict(x_test)  # usually only out by 0.0005
+
+    dump(model, "basic_train.joblib")
 
     # shows correlation between the first 4 components
     # x = pd.DataFrame(x)
@@ -264,32 +269,94 @@ def correlation_test():
 def run_model():
     dataframe = read('GOOG.csv')  # returns dataframe
     dataframe = shuffling(dataframe)  # returns dataframe
-    trained_model = train(dataframe)  # return model, x_train, x_test, y_test, pred
+    trained_model = train(dataframe[0:1007])  # return model, x_train, x_test, y_test, pred
     output(trained_model[3], trained_model[4])
 
 
 def run_pca_model():
     dataframe = read('GOOG.csv')  # returns dataframe
     dataframe = shuffling(dataframe)  # returns dataframe
-    trained_model = trained_pca(dataframe)  # return model, x_train, x_test, y_test, pred
+    trained_model = trained_pca(dataframe[0:1007])  # return model, x_train, x_test, y_test, pred
     output(trained_model[3], trained_model[4])
 
 
 def run_k_fold_model():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe)  # returns dataframe
+    dataframe = shuffling(dataframe[0:1007])  # returns dataframe
     train_k_fold(dataframe, 10)  # output graph of errors for k fold analysis k=10
 
 
 def run_k_fold_model_pca():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe)  # returns dataframe
+    dataframe = shuffling(dataframe[0:1007])  # returns dataframe
     train_k_fold_pca(dataframe, 10)  # output graph of errors for k fold analysis k=10 using pca
+
+
+def plot_stocks_against_pred():
+    dataframe = read('GOOG.csv')  # returns dataframe
+    dataframe = dataframe[1008:1258]
+    x = dataframe[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = dataframe[['close']].values.astype(np.float32)
+
+    filename = input("Please input model filename (filename.joblib)")
+
+    model = load(filename)
+
+    pred = model.predict(x)
+
+    plt.figure(1, figsize=(20, 20))
+
+    x_ax = [n for n in range(1, 251)]
+
+    plt.plot(x_ax, pred, label="predictions")
+    plt.plot(x_ax, y, label="actual values")
+
+    plt.legend()
+
+    plt.title('Prediction evaluation')
+    plt.ylabel('close')
+
+    print(np.sqrt(metrics.mean_squared_error(pred, y)))
+
+
+def plot_stocks_against_pred_pca():
+    dataframe = read('GOOG.csv')  # returns dataframe
+    dataframe = dataframe[1008:1258]
+    x = dataframe[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = dataframe[['close']].values.astype(np.float32)
+
+    sc = StandardScaler()
+    pca_bot = PCA(n_components=2)
+    x_scaled = sc.fit_transform(x)
+    x_pca = pca_bot.fit_transform(x_scaled)
+
+    filename = input("Please input model filename (filename.joblib)")
+
+    model = load(filename)
+
+    pred = model.predict(x_pca)
+
+    plt.figure(1, figsize=(10, 10))
+
+    x_ax = [n for n in range(1, 251)]
+
+    plt.plot(x_ax, pred, label="predictions")
+    plt.plot(x_ax, y, label="actual values")
+
+    plt.legend()
+
+    plt.title('Prediction evaluation')
+    plt.ylabel('close')
+
+    print(np.sqrt(metrics.mean_squared_error(pred, y)))
 
 
 if __name__ == "__main__":
     # correlation_test()
     # run_model()
     # run_pca_model()  # has a higher R squared value but no correlation, suggesting hidden variables???
-    run_k_fold_model_pca()
+    # run_k_fold_model_pca()
+    # run_k_fold_model()
+    plot_stocks_against_pred()
+    # plot_stocks_against_pred_pca()
     plt.show()
