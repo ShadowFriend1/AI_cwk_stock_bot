@@ -100,7 +100,6 @@ def trained_pca(df):
 
 
 def train_k_fold(df, k):
-
     x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df[['close']].values.astype(np.float32)
 
@@ -136,6 +135,7 @@ def train_k_fold(df, k):
 
         scores.append(score)
 
+        # plots y_test and pred to show any obvious errors in prediction
         plt.figure(figsize=(15, 5))
 
         plt.plot(1, 2, 1)
@@ -145,6 +145,7 @@ def train_k_fold(df, k):
         plt.title('close values')
         plt.xlabel('close')
 
+    # plots the error per fold
     plt.figure(figsize=(15, 5))
     plt.bar([n for n in range(k)], scores)
     plt.title('Mean Squared Averages Per Fold')
@@ -157,11 +158,8 @@ def train_k_fold(df, k):
 
 
 def train_k_fold_pca(df, k):
-
-    df_s = shuffling(df)
-
-    x = df_s[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
-    y = df_s[['close']].values.astype(np.float32)
+    x = df[['open', 'high', 'low', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = df[['close']].values.astype(np.float32)
 
     sc = StandardScaler()
     pca_bot = PCA(n_components=2)
@@ -180,6 +178,7 @@ def train_k_fold_pca(df, k):
     worst_score = 0
     average_score = 0
     scores = []
+    # Repeats the model training k times
     for train_index, validate_index in kf.split(x_pca, y):
         model.fit(x_pca[train_index], y[train_index])
         y_test = y[validate_index]
@@ -187,6 +186,7 @@ def train_k_fold_pca(df, k):
         score = np.sqrt(metrics.mean_squared_error(pred, y_test))
         print(f"Fold:  #{fold}, Training Size: {len(x_pca[train_index])}, Validation Size: {len(y[validate_index])}")
         print("Mean Squared error: {}".format(score))
+        # POroduces stats based on the msq error for each fold and stores the best model
         if (score < best_score) or (best_score == 0):
             best_score = score
             dump(model, "k_fold_pca_best.joblib")
@@ -200,6 +200,7 @@ def train_k_fold_pca(df, k):
 
         scores.append(score)
 
+        # plots y_test and pred to show any obvious errors in prediction
         plt.figure(figsize=(15, 5))
 
         plt.plot(1, 2, 1)
@@ -209,6 +210,7 @@ def train_k_fold_pca(df, k):
         plt.title('close values')
         plt.xlabel('close')
 
+    # plots the error per fold
     plt.figure(figsize=(15, 5))
     plt.bar([n for n in range(k)], scores)
     plt.title('Mean Squared Averages Per Fold')
@@ -268,30 +270,31 @@ def correlation_test():
 
 def run_model():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe)  # returns dataframe
+    dataframe = shuffling(dataframe)  # returns shuffled dataframe containing only training dataset
     trained_model = train(dataframe[0:1007])  # return model, x_train, x_test, y_test, pred
     output(trained_model[3], trained_model[4])
 
 
 def run_pca_model():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe)  # returns dataframe
+    dataframe = shuffling(dataframe)  # returns shuffled dataframe containing only training dataset
     trained_model = trained_pca(dataframe[0:1007])  # return model, x_train, x_test, y_test, pred
     output(trained_model[3], trained_model[4])
 
 
 def run_k_fold_model():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe[0:1007])  # returns dataframe
+    dataframe = shuffling(dataframe[0:1007])  # returns shuffled dataframe containing only training dataset
     train_k_fold(dataframe, 10)  # output graph of errors for k fold analysis k=10
 
 
 def run_k_fold_model_pca():
     dataframe = read('GOOG.csv')  # returns dataframe
-    dataframe = shuffling(dataframe[0:1007])  # returns dataframe
+    dataframe = shuffling(dataframe[0:1007])  # returns shuffled dataframe containing only training dataset
     train_k_fold_pca(dataframe, 10)  # output graph of errors for k fold analysis k=10 using pca
 
 
+# plots a graph of predictions and actual values for close using the remaining dataset
 def plot_stocks_against_pred():
     dataframe = read('GOOG.csv')  # returns dataframe
     dataframe = dataframe[1008:1258]
