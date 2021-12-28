@@ -100,9 +100,10 @@ def train_k_fold(df, k):
     x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
     y = df[['close']].values.astype(np.float32)
 
-    # standardises the data - will not do much as data is already similar in size
-
     model = LinearRegression()
+
+    # trains with k fold where k is deternimed by the parameter k, outputs prediction graphs for each fold and error
+    # then produces a graph of error per fold as well as a best,worst and average error
 
     kf = KFold(k)
 
