@@ -30,7 +30,7 @@ def heatmap(df):
 
 
 def shuffling(df):
-    np.random.seed(42)  # Uncomment this line to get the same shuffle each time
+    # np.random.seed(42)  # Uncomment this line to get the same shuffle each time
     df = df.reindex(np.random.permutation(df.index))
     df.reset_index(inplace=True, drop=True)
     return df
@@ -97,8 +97,11 @@ def trained_pca(df):
 
 
 def train_k_fold(df, k):
-    x = df[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
-    y = df[['close']].values.astype(np.float32)
+
+    df_s = shuffling(df)
+
+    x = df_s[['open', 'high', 'low', 'close', 'volume', 'divCash', 'splitFactor']].values.astype(np.float32)
+    y = df_s[['close']].values.astype(np.float32)
 
     model = LinearRegression()
 
